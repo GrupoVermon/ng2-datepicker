@@ -1,4 +1,4 @@
-import { Component, ElementRef, Inject, OnInit, forwardRef, Input, Output, EventEmitter } from '@angular/core';
+import { Component, ElementRef, Inject, OnInit, forwardRef, Input, Output, EventEmitter, ApplicationRef } from '@angular/core';
 import { NG_VALUE_ACCESSOR, ControlValueAccessor } from '@angular/forms';
 import { SlimScrollOptions } from 'ng2-slimscroll/ng2-slimscroll';
 import * as moment from 'moment';
@@ -327,7 +327,7 @@ export class DatePickerComponent implements ControlValueAccessor, OnInit {
   private onTouchedCallback: () => void = () => { };
   private onChangeCallback: (_: any) => void = () => { };
 
-  constructor( @Inject(ElementRef) public el: ElementRef) {
+  constructor( @Inject(ElementRef) public el: ElementRef, @Inject(ApplicationRef) public appRef: ApplicationRef) {
     this.opened = false;
     this.currentDate = Moment();
     this.options = this.options || {};
@@ -422,6 +422,9 @@ export class DatePickerComponent implements ControlValueAccessor, OnInit {
           }
           if (e.data === 'open') {
             this.open();
+          }
+          if (e.data === 'refresh') {
+            this.refresh();
           }
         }
 
@@ -584,6 +587,29 @@ export class DatePickerComponent implements ControlValueAccessor, OnInit {
   close() {
     this.opened = false;
     this.outputEvents.emit({ type: 'default', data: 'closed' });
+  }
+
+  refresh() {
+    this.appRef.tick();
+    if (this.options.initialDate instanceof Date) {
+      this.currentDate = Moment(this.options.initialDate);
+      this.selectDate(null, this.currentDate);
+    }
+
+    if (this.options.minDate instanceof Date) {
+      this.minDate = Moment(this.options.minDate);
+    } else {
+      this.minDate = null;
+    }
+
+    if (this.options.maxDate instanceof Date) {
+      this.maxDate = Moment(this.options.maxDate);
+    } else {
+      this.maxDate = null;
+    }
+
+    this.generateCalendar();
+    this.appRef.tick();
   }
 
   onOpen() {
